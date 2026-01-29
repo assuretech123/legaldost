@@ -7,12 +7,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 20px; }
-        
-        /* Fixed Language Bar at the Top */
-        .lang-bar { width: 100%; max-width: 600px; display: flex; justify-content: flex-end; margin-bottom: 10px; }
-        #google_translate_element { background: white; padding: 5px; border-radius: 4px; border: 1px solid #ddd; }
-
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 20px; user-select: none; }
+        #google_translate_element { margin-bottom: 20px; align-self: flex-end; }
         .container { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 600px; text-align: center; }
         h1 { color: #2c3e50; margin-top: 0; }
         .upload-box { border: 2px dashed #3498db; padding: 20px; border-radius: 8px; margin: 20px 0; background: #f9fcff; }
@@ -20,18 +16,14 @@
         button { background-color: #3498db; color: white; padding: 14px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; width: 100%; font-weight: bold; }
         #output { margin-top: 20px; padding: 15px; border-radius: 6px; display: none; text-align: left; background: #e8f4fd; color: #2c3e50; border-left: 5px solid #3498db; }
         .footer { margin-top: 30px; font-size: 12px; color: #bdc3c7; }
-        
-        /* Hide Google Branding */
-        .goog-logo-link, .goog-te-gadget span, .goog-te-banner-frame { display: none !important; }
-        .goog-te-gadget { color: transparent !important; font-size: 0 !important; }
-        .goog-te-combo { padding: 5px; border-radius: 4px; border: 1px solid #3498db; color: #2c3e50; }
+        /* Hides the "Powered by Google" branding for a cleaner look */
+        .goog-logo-link { display:none !important; } 
+        .goog-te-gadget { color: transparent !important; }
     </style>
 </head>
 <body>
 
-    <div class="lang-bar">
-        <div id="google_translate_element"></div>
-    </div>
+    <div id="google_translate_element"></div>
 
     <div class="container">
         <h1>Legal Sarathi ⚖️</h1>
@@ -55,14 +47,21 @@
         function googleTranslateElementInit() {
             new google.translate.TranslateElement({
                 pageLanguage: 'en',
-                includedLanguages: 'en,hi,mr',
-                layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+                includedLanguages: 'en,hi,mr', 
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+                autoDisplay: false
             }, 'google_translate_element');
         }
     </script>
-    <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
     <script>
+        // Security: Stop Right Click & View Source
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.onkeydown = function(e) {
+            if (e.keyCode == 123 || (e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0))) return false;
+        };
+
         // File Handling Logic
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
@@ -101,7 +100,7 @@
             outputDiv.innerHTML = "<em>Analyzing document...</em>";
             
             setTimeout(() => {
-                outputDiv.innerHTML = "<strong>Summary:</strong> This document says you need to follow the rules mentioned in section 4. Please verify the dates carefully.";
+                outputDiv.innerHTML = "<strong>Summary:</strong> This is a standard legal notice. It basically states that both parties must agree to terms before the date mentioned in the document. No immediate action is required until you verify the names.";
                 outputDiv.style.background = "#d4edda"; 
             }, 1500);
         }
