@@ -7,94 +7,36 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 20px; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 20px; user-select: none; }
+        #google_translate_element { margin-bottom: 20px; align-self: flex-end; }
         .container { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 600px; text-align: center; }
-        h1 { color: #2c3e50; }
+        h1 { color: #2c3e50; margin-top: 0; }
         .upload-box { border: 2px dashed #3498db; padding: 20px; border-radius: 8px; margin: 20px 0; background: #f9fcff; }
-        input[type="file"] { margin: 10px 0; }
         textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
         button { background-color: #3498db; color: white; padding: 14px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; width: 100%; font-weight: bold; }
-        button:hover { background-color: #2980b9; }
-        #output { margin-top: 20px; padding: 15px; border-radius: 6px; display: none; text-align: left; background: #e8f4fd; color: #2c3e50; border-left: 5px solid #3498db; line-height: 1.6; }
-        .counter-section { margin-top: 30px; font-size: 14px; color: #7f8c8d; }
+        #output { margin-top: 20px; padding: 15px; border-radius: 6px; display: none; text-align: left; background: #e8f4fd; color: #2c3e50; border-left: 5px solid #3498db; }
+        .footer { margin-top: 30px; font-size: 12px; color: #bdc3c7; }
+        /* Hides the "Powered by Google" branding for a cleaner look */
+        .goog-logo-link { display:none !important; } 
+        .goog-te-gadget { color: transparent !important; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>Legal Sarathi ⚖️</h1>
-    <p>Upload a PDF/Word file or paste text to simplify it.</p>
+    <div id="google_translate_element"></div>
 
-    <div class="upload-box">
-        <label><strong>Step 1: Upload Document (.pdf, .docx)</strong></label><br>
-        <input type="file" id="fileInput" accept=".pdf,.docx">
-    </div>
+    <div class="container">
+        <h1>Legal Sarathi ⚖️</h1>
+        <p>Upload a PDF/Word file to simplify it.</p>
 
-    <label><strong>Or Paste Text Manually:</strong></label>
-    <textarea id="legalText" rows="6" placeholder="Document text will appear here after upload..."></textarea>
-    
-    <button onclick="simplifyLegal()">Simplify Document Now</button>
-    
-    <div id="output"></div>
+        <div class="upload-box">
+            <label><strong>Step 1: Upload Document (.pdf, .docx)</strong></label><br>
+            <input type="file" id="fileInput" accept=".pdf,.docx">
+        </div>
 
-    <div class="counter-section">
-        <p>Total People Assisted:</p>
-        <img src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Flegal-sarathi&count_bg=%233498DB&title_bg=%23555555&title=Visitors" alt="Visitor Counter">
-    </div>
-</div>
+        <textarea id="legalText" rows="6" placeholder="Document text will appear here..."></textarea>
+        <button onclick="simplifyLegal()">Simplify Now</button>
+        <div id="output"></div>
 
-<script>
-    // Configure PDF.js
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
-    // Handle File Selection
-    document.getElementById('fileInput').onchange = async function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        
-        if (file.type === "application/pdf") {
-            reader.onload = async function() {
-                const typedarray = new Uint8Array(this.result);
-                const pdf = await pdfjsLib.getDocument(typedarray).promise;
-                let fullText = "";
-                for (let i = 1; i <= pdf.numPages; i++) {
-                    const page = await pdf.getPage(i);
-                    const content = await page.getTextContent();
-                    fullText += content.items.map(item => item.str).join(" ") + "\n";
-                }
-                document.getElementById('legalText').value = fullText;
-            };
-            reader.readAsArrayBuffer(file);
-        } 
-        else if (file.name.endsWith(".docx")) {
-            reader.onload = function(event) {
-                mammoth.extractRawText({arrayBuffer: event.target.result})
-                    .then(function(result) {
-                        document.getElementById('legalText').value = result.value;
-                    });
-            };
-            reader.readAsArrayBuffer(file);
-        }
-    };
-
-    function simplifyLegal() {
-        const text = document.getElementById('legalText').value;
-        const outputDiv = document.getElementById('output');
-
-        if(!text) { alert("Please upload a file or paste text first!"); return; }
-
-        outputDiv.style.display = "block";
-        outputDiv.innerHTML = "<em>AI is analyzing your document...</em>";
-
-        // Logic placeholder for your AI API
-        setTimeout(() => {
-            outputDiv.innerHTML = "<strong>Simplified Summary:</strong><br>This document is a standard legal agreement. It specifies that the parties involved must fulfill their obligations by the deadline, or a penalty may apply. It is safe to proceed if you agree with the terms in Section 3.";
-            outputDiv.style.background = "#d4edda"; 
-        }, 2000);
-    }
-</script>
-
-</body>
-</html>
+        <div class="footer">
+            © 2026 Legal Sarathi. Propri
