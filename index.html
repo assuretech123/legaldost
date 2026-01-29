@@ -4,14 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Legal Sarathi - AI Assistant</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; }
-        .container { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 90%; max-width: 500px; text-align: center; }
-        h1 { color: #2c3e50; margin-bottom: 1.5rem; }
-        input, textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-        button { background-color: #3498db; color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; transition: background 0.3s; width: 100%; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 20px; }
+        .container { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 600px; text-align: center; }
+        h1 { color: #2c3e50; }
+        .upload-box { border: 2px dashed #3498db; padding: 20px; border-radius: 8px; margin: 20px 0; background: #f9fcff; }
+        input[type="file"] { margin: 10px 0; }
+        textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
+        button { background-color: #3498db; color: white; padding: 14px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; width: 100%; font-weight: bold; }
         button:hover { background-color: #2980b9; }
-        #output { margin-top: 20px; padding: 15px; border-radius: 6px; display: none; text-align: left; background: #e8f4fd; color: #2c3e50; border-left: 5px solid #3498db; }
+        #output { margin-top: 20px; padding: 15px; border-radius: 6px; display: none; text-align: left; background: #e8f4fd; color: #2c3e50; border-left: 5px solid #3498db; line-height: 1.6; }
         .counter-section { margin-top: 30px; font-size: 14px; color: #7f8c8d; }
     </style>
 </head>
@@ -19,35 +23,76 @@
 
 <div class="container">
     <h1>Legal Sarathi ⚖️</h1>
-    <p>Simplifying complex laws for you.</p>
-    <input type="text" id="userName" placeholder="Your Name">
-    <textarea id="legalText" rows="5" placeholder="Paste complex legal text here..."></textarea>
-    <button onclick="simplifyLegal()">Simplify Now</button>
+    <p>Upload a PDF/Word file or paste text to simplify it.</p>
+
+    <div class="upload-box">
+        <label><strong>Step 1: Upload Document (.pdf, .docx)</strong></label><br>
+        <input type="file" id="fileInput" accept=".pdf,.docx">
+    </div>
+
+    <label><strong>Or Paste Text Manually:</strong></label>
+    <textarea id="legalText" rows="6" placeholder="Document text will appear here after upload..."></textarea>
+    
+    <button onclick="simplifyLegal()">Simplify Document Now</button>
+    
     <div id="output"></div>
 
     <div class="counter-section">
         <p>Total People Assisted:</p>
-        <img src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Flegal-sarathi&count_bg=%233498DB&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=Visitors&edge_flat=false" alt="Visitor Counter">
+        <img src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Flegal-sarathi&count_bg=%233498DB&title_bg=%23555555&title=Visitors" alt="Visitor Counter">
     </div>
 </div>
 
 <script>
-    async function simplifyLegal() {
-        const name = document.getElementById('userName').value || "Friend";
+    // Configure PDF.js
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    // Handle File Selection
+    document.getElementById('fileInput').onchange = async function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        
+        if (file.type === "application/pdf") {
+            reader.onload = async function() {
+                const typedarray = new Uint8Array(this.result);
+                const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                let fullText = "";
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const content = await page.getTextContent();
+                    fullText += content.items.map(item => item.str).join(" ") + "\n";
+                }
+                document.getElementById('legalText').value = fullText;
+            };
+            reader.readAsArrayBuffer(file);
+        } 
+        else if (file.name.endsWith(".docx")) {
+            reader.onload = function(event) {
+                mammoth.extractRawText({arrayBuffer: event.target.result})
+                    .then(function(result) {
+                        document.getElementById('legalText').value = result.value;
+                    });
+            };
+            reader.readAsArrayBuffer(file);
+        }
+    };
+
+    function simplifyLegal() {
         const text = document.getElementById('legalText').value;
         const outputDiv = document.getElementById('output');
 
-        if(!text) { alert("Please paste some text!"); return; }
+        if(!text) { alert("Please upload a file or paste text first!"); return; }
 
         outputDiv.style.display = "block";
-        outputDiv.innerHTML = `<em>Processing for ${name}...</em>`;
+        outputDiv.innerHTML = "<em>AI is analyzing your document...</em>";
 
+        // Logic placeholder for your AI API
         setTimeout(() => {
-            outputDiv.innerHTML = `<strong>Hello ${name}, here is the simple version:</strong><br><br> 
-            Basically, this document says you have the right to proceed, but you must follow the local guidelines mentioned in the main section.`;
+            outputDiv.innerHTML = "<strong>Simplified Summary:</strong><br>This document is a standard legal agreement. It specifies that the parties involved must fulfill their obligations by the deadline, or a penalty may apply. It is safe to proceed if you agree with the terms in Section 3.";
             outputDiv.style.background = "#d4edda"; 
-            outputDiv.style.borderLeftColor = "#28a745";
-        }, 1500);
+        }, 2000);
     }
 </script>
 
