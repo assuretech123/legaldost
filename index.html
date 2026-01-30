@@ -1,18 +1,96 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Legal Sarathi - AI Assistant</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
-    <style>
-        /* [Same styles as before] */
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 20px; user-select: none; }
-        .container { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 600px; text-align: center; }
-        .footer { margin-top: 20px; font-size: 12px; color: #bdc3c7; }
-        /* ... existing styles ... */
-    </style>
+<div id="sarathi-wrapper" style="background:#fff; padding:25px; border:2px solid #1a73e8; border-radius:15px; max-width:500px; margin:20px auto; font-family:sans-serif; box-shadow:0 10px 30px rgba(0,0,0,0.1);">
+    <h2 style="color:#1a73e8; text-align:center; margin-top:0;">Legal Sarathi</h2>
+    <p style="text-align:center; color:#666; font-size:13px; margin-bottom:20px;">Personalized Legal Assistant<br>
+<b>This is only to help people to understand in simple <br>
+language, we are not suggesting anything</b></p>
+
+    <div style="margin-bottom:15px;">
+        <input type="text" id="usrName" placeholder="Your Full Name" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-bottom:10px; box-sizing:border-box;">
+        <input type="email" id="usrEmail" placeholder="Your Email Address" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box;">
+    </div>
+
+    <textarea id="legalData" placeholder="Paste legal text/contract here..." style="width:100%; height:120px; padding:12px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box; font-size:14px; margin-bottom:10px;"></textarea>
+    
+    <div style="display:flex; gap:10px; margin-bottom:10px;">
+        <select id="langSel" style="flex:1; padding:10px; border-radius:8px; border:1px solid #ddd; background:#f9f9f9;">
+            <option value="English">English</option>
+            <option value="Hindi">Hindi (हिंदी)</option>
+            <option value="Marathi">Marathi (मराठी)</option>
+        </select>
+        <button onclick="processSarathi()" id="goBtn" style="flex:1.5; background:#1a73e8; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold; transition:0.3s;">SIMPLIFY NOW</button>
+    </div>
+
+    <div id="statMsg" style="text-align:center; font-size:12px; font-weight:bold; padding:10px; display:none;"></div>
+    
+    <div id="resDisplay" style="display:none; margin-top:15px; padding:15px; background:#f0f7ff; border-radius:8px; border:1px solid #cce3ff;">
+        <div id="resText" style="font-size:14px; color:#333; line-height:1.6; white-space:pre-wrap;"></div>
+    </div>
+</div>
+
+<script>
+async function processSarathi() {
+    const name = document.getElementById('usrName').value.trim();
+    const email = document.getElementById('usrEmail').value.trim();
+    const text = document.getElementById('legalData').value.trim();
+    const lang = document.getElementById('langSel').value;
+    const btn = document.getElementById('goBtn');
+    const status = document.getElementById('statMsg');
+    const resBox = document.getElementById('resDisplay');
+    const resText = document.getElementById('resText');
+
+    if(!name || !email || !text) { alert("Please fill Name, Email, and Text."); return; }
+
+    // Start UI
+    btn.disabled = true;
+    btn.style.background = "#ccc";
+    status.style.display = "block";
+    status.innerText = "Connecting to Secure AI...";
+    status.style.color = "#1a73e8"; // Blue loading state
+    resBox.style.display = "none";
+
+    // API Key & Global URL
+    const apiKey = "AIzaSyD6I_HF8b4C7BU2TyRcu7h2zxAjcxDop64";
+    const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
+    const prompt = `User Name: ${name}. User Email: ${email}. 
+    Instruction: Act as Legal Sarathi. Simplify the following document for ${name} into easy ${lang} with bullet points. 
+    Document: ${text}`;
+
+    try {
+        // Add a timeout to prevent infinite "Blue" hanging
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); 
+
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+            signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+        const data = await response.json();
+
+        if (data.candidates && data.candidates[0].content) {
+            status.innerText = "Success!";
+            status.style.color = "green";
+            resText.innerText = data.candidates[0].content.parts[0].text;
+            resBox.style.display = "block";
+        } else {
+            throw new Error("Invalid API Response");
+        }
+    } catch (err) {
+        status.style.color = "red";
+        if (err.name === 'AbortError') {
+            status.innerText = "Connection Timed Out. Your host (Tinkerhost) is blocking the AI.";
+        } else {
+            status.innerText = "Host Security Blocked Request. Refreshing...";
+            // Automatically refresh after 3 seconds to clear the Tinkerhost "AES Challenge"
+            setTimeout(() => location.reload(), 3000);
+        }
+    } finally {
+        btn.disabled = false;
+        btn.style.background = "#1a73e8";
     <script>
         // STOPS RIGHT CLICK
         document.addEventListener('contextmenu', event => event.preventDefault());
@@ -23,18 +101,7 @@
             }
         }
     </script>
-</head>
-<body>
-
-<div class="container">
-    <h1>Legal Sarathi ⚖️</h1>
-    <p>Upload a PDF/Word file to simplify it.</p>
-    <div class="footer">
-        © 2026 Legal Sarathi. Built by [Your Name]. <br>
-        This tool is for informational purposes only and does not constitute legal advice <br>
-        All logic is proprietary. Legal action will be taken against clones.        
-    </div>
-</div>
-
-</body>
-</html>
+    }
+}
+</script>
+ 
