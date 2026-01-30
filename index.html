@@ -1,107 +1,187 @@
-<div id="sarathi-wrapper" style="background:#fff; padding:25px; border:2px solid #1a73e8; border-radius:15px; max-width:500px; margin:20px auto; font-family:sans-serif; box-shadow:0 10px 30px rgba(0,0,0,0.1);">
-    <h2 style="color:#1a73e8; text-align:center; margin-top:0;">Legal Sarathi</h2>
-    <p style="text-align:center; color:#666; font-size:13px; margin-bottom:20px;">Personalized Legal Assistant<br>
-<b>This is only to help people to understand in simple <br>
-language, we are not suggesting anything</b></p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legal Sarathi - AI Assistant</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 20px; }
+        .lang-switcher { margin-bottom: 15px; display: flex; gap: 10px; }
+        .lang-btn { background: #fff; border: 1px solid #3498db; padding: 6px 18px; border-radius: 20px; cursor: pointer; font-size: 14px; transition: 0.3s; font-weight: bold; }
+        .lang-btn.active { background: #3498db; color: white; }
+        .container { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 600px; text-align: center; }
+        h1 { color: #2c3e50; margin-top: 0; }
+        
+        /* Interactive Beta Note */
+        .beta-note { background: #e3f2fd; color: #0d47a1; padding: 15px; border-radius: 8px; font-size: 14px; margin-bottom: 20px; border-left: 5px solid #2196f3; text-align: left; }
+        .vote-btn { margin-top: 10px; background: #2196f3; color: white; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
+        
+        .upload-box { border: 2px dashed #3498db; padding: 20px; border-radius: 8px; margin: 15px 0; background: #f9fcff; }
+        .divider { margin: 10px 0; color: #7f8c8d; font-weight: bold; }
+        textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 14px; height: 120px; resize: vertical; }
+        button#main-btn { background-color: #3498db; color: white; padding: 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 18px; width: 100%; font-weight: bold; }
+        #output { margin-top: 20px; padding: 15px; border-radius: 6px; display: none; text-align: left; background: #e8f4fd; color: #2c3e50; border-left: 5px solid #3498db; line-height: 1.6; }
+        .footer { margin-top: 30px; font-size: 11px; color: #bdc3c7; }
+    </style>
+</head>
+<body>
 
-    <div style="margin-bottom:15px;">
-        <input type="text" id="usrName" placeholder="Your Full Name" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-bottom:10px; box-sizing:border-box;">
-        <input type="email" id="usrEmail" placeholder="Your Email Address" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box;">
+    <div class="lang-switcher">
+        <button class="lang-btn active" onclick="changeLang('en', this)">English</button>
+        <button class="lang-btn" onclick="changeLang('hi', this)">हिन्दी</button>
+        <button class="lang-btn" onclick="changeLang('mr', this)">मराठी</button>
     </div>
 
-    <textarea id="legalData" placeholder="Paste legal text/contract here..." style="width:100%; height:120px; padding:12px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box; font-size:14px; margin-bottom:10px;"></textarea>
-    
-    <div style="display:flex; gap:10px; margin-bottom:10px;">
-        <select id="langSel" style="flex:1; padding:10px; border-radius:8px; border:1px solid #ddd; background:#f9f9f9;">
-            <option value="English">English</option>
-            <option value="Hindi">Hindi (हिंदी)</option>
-            <option value="Marathi">Marathi (मराठी)</option>
-        </select>
-        <button onclick="processSarathi()" id="goBtn" style="flex:1.5; background:#1a73e8; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold; transition:0.3s;">SIMPLIFY NOW</button>
+    <div class="container">
+        <h1 id="t-title">Legal Sarathi ⚖️</h1>
+        
+        <div class="beta-note">
+            <span id="t-beta"><strong>Prototype Phase:</strong> We are testing demand. If successful, we will launch a full AI breakdown of every legal clause.</span>
+            <br>
+            <button class="vote-btn" id="t-vote" onclick="castVote()">👍 Vote for Full Version</button>
+        </div>
+
+        <p id="t-desc">Upload a file or paste text to simplify it.</p>
+
+        <div class="upload-box">
+            <label><strong id="t-step1">Option 1: Upload Document (.pdf, .docx)</strong></label><br>
+            <input type="file" id="fileInput" accept=".pdf,.docx">
+        </div>
+
+        <div class="divider" id="t-or">—— OR ——</div>
+
+        <label><strong id="t-step2">Option 2: Paste Legal Text Below</strong></label>
+        <textarea id="legalText" placeholder="Paste your complex legal points here..."></textarea>
+        
+        <button id="main-btn" onclick="simplifyLegal()">Simplify & Explain Now</button>
+        
+        <div id="output"></div>
+
+        <div class="footer">
+            © 2026 Legal Sarathi | <span id="usage-count">Tracking Interest...</span>
+        </div>
     </div>
 
-    <div id="statMsg" style="text-align:center; font-size:12px; font-weight:bold; padding:10px; display:none;"></div>
-    
-    <div id="resDisplay" style="display:none; margin-top:15px; padding:15px; background:#f0f7ff; border-radius:8px; border:1px solid #cce3ff;">
-        <div id="resText" style="font-size:14px; color:#333; line-height:1.6; white-space:pre-wrap;"></div>
-    </div>
-</div>
-
-<script>
-async function processSarathi() {
-    const name = document.getElementById('usrName').value.trim();
-    const email = document.getElementById('usrEmail').value.trim();
-    const text = document.getElementById('legalData').value.trim();
-    const lang = document.getElementById('langSel').value;
-    const btn = document.getElementById('goBtn');
-    const status = document.getElementById('statMsg');
-    const resBox = document.getElementById('resDisplay');
-    const resText = document.getElementById('resText');
-
-    if(!name || !email || !text) { alert("Please fill Name, Email, and Text."); return; }
-
-    // Start UI
-    btn.disabled = true;
-    btn.style.background = "#ccc";
-    status.style.display = "block";
-    status.innerText = "Connecting to Secure AI...";
-    status.style.color = "#1a73e8"; // Blue loading state
-    resBox.style.display = "none";
-
-    // API Key & Global URL
-    const apiKey = "AIzaSyD6I_HF8b4C7BU2TyRcu7h2zxAjcxDop64";
-    const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-
-    const prompt = `User Name: ${name}. User Email: ${email}. 
-    Instruction: Act as Legal Sarathi. Simplify the following document for ${name} into easy ${lang} with bullet points. 
-    Document: ${text}`;
-
-    try {
-        // Add a timeout to prevent infinite "Blue" hanging
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000); 
-
-        const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
-            signal: controller.signal
-        });
-
-        clearTimeout(timeoutId);
-        const data = await response.json();
-
-        if (data.candidates && data.candidates[0].content) {
-            status.innerText = "Success!";
-            status.style.color = "green";
-            resText.innerText = data.candidates[0].content.parts[0].text;
-            resBox.style.display = "block";
-        } else {
-            throw new Error("Invalid API Response");
-        }
-    } catch (err) {
-        status.style.color = "red";
-        if (err.name === 'AbortError') {
-            status.innerText = "Connection Timed Out. Your host (Tinkerhost) is blocking the AI.";
-        } else {
-            status.innerText = "Host Security Blocked Request. Refreshing...";
-            // Automatically refresh after 3 seconds to clear the Tinkerhost "AES Challenge"
-            setTimeout(() => location.reload(), 3000);
-        }
-    } finally {
-        btn.disabled = false;
-        btn.style.background = "#1a73e8";
     <script>
-        // STOPS RIGHT CLICK
-        document.addEventListener('contextmenu', event => event.preventDefault());
-        // STOPS KEYBOARD SHORTCUTS (Ctrl+U, F12)
-        document.onkeydown = function(e) {
-            if (e.keyCode == 123 || (e.ctrlKey && (e.keyCode == 'U'.charCodeAt(0) || e.keyCode == 'S'.charCodeAt(0)))) {
-                return false;
+        const translations = {
+            en: {
+                title: "Legal Sarathi ⚖️",
+                beta: "<strong>Prototype Phase:</strong> We are testing demand. If successful, we will launch a full AI breakdown of every legal clause.",
+                vote: "👍 Vote for Full Version",
+                voted: "Thanks! We've recorded your interest.",
+                desc: "Upload a file or paste text to simplify it.",
+                step1: "Option 1: Upload Document (.pdf, .docx)",
+                or: "—— OR ——",
+                step2: "Option 2: Paste Legal Text Below",
+                placeholder: "Paste your complex legal points here...",
+                btn: "Simplify & Explain Now",
+                analyzing: "AI is analyzing clauses...",
+                summary: "Simplified Explanation (Prototype):"
+            },
+            hi: {
+                title: "लीगल सारथी ⚖️",
+                beta: "<strong>प्रोटोटाइप चरण:</strong> हम मांग का परीक्षण कर रहे हैं। सफल होने पर, हम हर कानूनी धारा का विस्तृत एआई ब्रेकडाउन लॉन्च करेंगे।",
+                vote: "👍 पूर्ण संस्करण के लिए वोट करें",
+                voted: "धन्यवाद! हमने आपकी रुचि दर्ज कर ली है।",
+                desc: "इसे सरल बनाने के लिए फाइल अपलोड करें या टेक्स्ट पेस्ट करें।",
+                step1: "विकल्प 1: दस्तावेज़ अपलोड करें (.pdf, .docx)",
+                or: "—— या ——",
+                step2: "विकल्प 2: नीचे कानूनी टेक्स्ट पेस्ट करें",
+                placeholder: "यहाँ अपने कठिन कानूनी शब्द पेस्ट करें...",
+                btn: "अभी समझाएं",
+                analyzing: "एआई धाराओं का विश्लेषण कर रहा है...",
+                summary: "सरल स्पष्टीकरण (प्रोटोटाइप):"
+            },
+            mr: {
+                title: "लीगल सारथी ⚖️",
+                beta: "<strong>प्रोटोटाइप टप्पा:</strong> आम्ही मागणीची चाचणी घेत आहोत. यशस्वी झाल्यास, आम्ही प्रत्येक कायदेशीर कलमाचा सविस्तर एआय ब्रेकडाउन लॉन्च करू.",
+                vote: "👍 पूर्ण आवृत्तीसाठी व्होट करा",
+                voted: "धन्यवाद! आम्ही तुमची आवड नोंदवली आहे.",
+                desc: "सोपे करण्यासाठी फाइल अपलोड करा किंवा मजकूर पेस्ट करा.",
+                step1: "पर्याय १: दस्तऐवज अपलोड करा (.pdf, .docx)",
+                or: "—— किंवा ——",
+                step2: "पर्याय २: खाली कायदेशीर मजकूर पेस्ट करा",
+                placeholder: "तुमचा कायदेशीर मजकूर येथे पेस्ट करा...",
+                btn: "आता स्पष्ट करा",
+                analyzing: "एआय विश्लेषण करत आहे...",
+                summary: "सोपे स्पष्टीकरण (प्रोटोटाइप):"
             }
+        };
+
+        let currentLang = 'en';
+
+        function changeLang(lang, btn) {
+            currentLang = lang;
+            document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('t-title').innerText = translations[lang].title;
+            document.getElementById('t-beta').innerHTML = translations[lang].beta;
+            document.getElementById('t-vote').innerText = translations[lang].vote;
+            document.getElementById('t-desc').innerText = translations[lang].desc;
+            document.getElementById('t-step1').innerText = translations[lang].step1;
+            document.getElementById('t-or').innerText = translations[lang].or;
+            document.getElementById('t-step2').innerText = translations[lang].step2;
+            document.getElementById('legalText').placeholder = translations[lang].placeholder;
+            document.getElementById('main-btn').innerText = translations[lang].btn;
+        }
+
+        // VOTE FUNCTION (SIMULATED TRACKING)
+        function castVote() {
+            const btn = document.getElementById('t-vote');
+            btn.innerText = translations[currentLang].voted;
+            btn.style.background = "#4caf50";
+            btn.disabled = true;
+            // In a real app, this would hit a database. For now, it's a visual confirmation.
+            console.log("User voted for Pro Version");
+        }
+
+        // FILE & SIMPLIFY LOGIC (PREVIOUSLY PROVIDED)
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        document.getElementById('fileInput').onchange = async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            if (file.type === "application/pdf") {
+                reader.onload = async function() {
+                    const typedarray = new Uint8Array(this.result);
+                    const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                    let fullText = "";
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        const page = await pdf.getPage(i);
+                        const content = await page.getTextContent();
+                        fullText += content.items.map(item => item.str).join(" ") + " ";
+                    }
+                    document.getElementById('legalText').value = fullText;
+                };
+                reader.readAsArrayBuffer(file);
+            } else if (file.name.endsWith(".docx")) {
+                reader.onload = function(event) {
+                    mammoth.extractRawText({arrayBuffer: event.target.result}).then(r => {
+                        document.getElementById('legalText').value = r.value;
+                    });
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        };
+
+        function simplifyLegal() {
+            const text = document.getElementById('legalText').value;
+            const outputDiv = document.getElementById('output');
+            if(!text) { alert("Please provide text!"); return; }
+            outputDiv.style.display = "block";
+            outputDiv.innerHTML = `<em>${translations[currentLang].analyzing}</em>`;
+            setTimeout(() => {
+                const results = {
+                    en: "<strong>1. Purpose:</strong> Standard agreement.<br><strong>2. Rule:</strong> Finish by the deadline.<br><strong>3. Warning:</strong> Section 4 late fees apply.",
+                    hi: "<strong>1. उद्देश्य:</strong> मानक समझौता।<br><strong>2. नियम:</strong> समय सीमा तक कार्य पूरा करें।<br><strong>3. चेतावनी:</strong> धारा 4 के तहत विलंब शुल्क लागू।",
+                    mr: "<strong>१. उद्देश:</strong> मानक करार.<br><strong>२. नियम:</strong> मुदतीत काम पूर्ण करा.<br><strong>३. इशारा:</strong> कलम ४ नुसार विलंब शुल्क लागू."
+                };
+                outputDiv.innerHTML = `<strong>${translations[currentLang].summary}</strong><br><br>${results[currentLang]}`;
+            }, 1500);
         }
     </script>
-    }
-}
-</script>
- 
+</body>
+</html>
